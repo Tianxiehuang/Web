@@ -1,23 +1,8 @@
 from cnocr import CnOcr
-import easyocr
-
-from fuzzywuzzy import fuzz
 import cv2
-import os
-from PIL import Image
-from torchvision import transforms
-import matplotlib.pyplot as plt
-import argparse
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
-from torchvision import datasets, transforms, models
-from torch.optim.lr_scheduler import StepLR
-import os
-import shutil
 import numpy as np
-import random
+from fuzzywuzzy import fuzz
+
 
 def ocrcheck(test_path):
     """
@@ -122,55 +107,6 @@ def ocrcheck(test_path):
         #             ad_check = 1
     return ad_check,game_check,other_check,yellow_check,txt
 
-class Net(nn.Module):
-    """
-    模型
-    """
-    def __init__(self):
-        super(Net, self).__init__()
-        self.conv1 = nn.Conv2d(3, 32, 3, 1)
-        self.conv2 = nn.Conv2d(32, 64, 3, 1)
-        self.dropout1 = nn.Dropout(0.25)
-        self.dropout2 = nn.Dropout(0.5)
-        self.fc1 = nn.Linear(774400, 128)
-        self.fc2 = nn.Linear(128, 3)
-
-    def forward(self, x):
-        x = self.conv1(x)
-        x = F.relu(x)
-        x = self.conv2(x)
-        x = F.relu(x)
-        x = F.max_pool2d(x, 2)
-        x = self.dropout1(x)
-        x = torch.flatten(x, 1)
-        x = self.fc1(x)
-        x = F.relu(x)
-        x = self.dropout2(x)
-        x = self.fc2(x)
-        output = F.log_softmax(x, dim=1)
-        return output
-
-def cnn_evaluate(test_path):
-    """
-    输入路径
-    打印是哪一类
-    分类为:0、1、2:Gaming、Regular、Yellow
-    """
-    test_img = Image.open(test_path)
-    test_img = test_img.convert('RGB')
-    transform=transforms.Compose([
-            transforms.ToTensor()  
-            ])
-
-    norm=transforms.Compose([
-            transforms.Resize((256, 256)),   # 先将图像的较短一边缩放到 256
-            transforms.CenterCrop(224),     # 再将图像中心裁剪成 224x224
-            transforms.Normalize((0.1307,), (0.3081,))
-            ])
-    test_tensor = transform(test_img)[None,:,:,:]
-    test_tensor = transform(test_img)[None,:,:,:]
-    return torch.argmax(model(norm(test_tensor)))
-
 def complete_evaluate(test_path):
     """_summary_
     输出五元组:a:是否为广告
@@ -179,7 +115,8 @@ def complete_evaluate(test_path):
     """
     try:
         a,b,c,d,txt = ocrcheck(test_path)
-        e = cnn_evaluate(test_path).item()
+        # e = cnn_evaluate(test_path).item()
+        e = 1
         if (a==1):
             if (b==1 and e==0):  #赌博
                 return 1,1,0,0,txt
@@ -268,31 +205,3 @@ def get_information(test_path):
         most_common_ratio=-1
         most_common_color=-1
     return height, width, brightness, saturation,minmax,numcolors,most_common_ratio,most_common_color
-
-
-#以下全部为基础准备工作，调入各种文件,注意修改你的路径名
-gameword_path = os.path.abspath(r"word\gamingword.txt")
-yellowword_path = os.path.abspath(r"word\yellowword.txt")
-otherword_path = os.path.abspath(r"word\otherword.txt")
-net_path = os.path.abspath(r"net.pt")
-reader = easyocr.Reader(['ch_sim'])
-model=Net()
-model.load_state_dict(torch.load(net_path))
-model.eval()
-with open(gameword_path,"r",encoding='utf-8') as f:
-    gamewordlist = f.readlines()
-gamewordlist = [word.strip() for word in gamewordlist]
-
-with open(yellowword_path,"r",encoding='utf-8') as f:
-    yellowwordlist = f.readlines()
-yellowwordlist = [word.strip() for word in yellowwordlist]
-
-with open(otherword_path,"r",encoding='utf-8') as f:
-    otherwordlist = f.readlines()
-otherwordlist = [word.strip() for word in otherwordlist]
-
-# # # 此处test_path请改为你要的文件
-test_path = os.path.abspath(r"goal.jpg")
-# # print(complete_evaluate(test_path))
-print(get_information(test_path))
-

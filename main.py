@@ -15,73 +15,25 @@ import shutil
 from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.common.by import By
 
-'''
-from cnocr import CnOcr
-from fuzzywuzzy import fuzz
-import cv2
-from PIL import Image
-from torchvision import transforms
-import matplotlib.pyplot as plt
-import argparse
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
-from torchvision import datasets, transforms, models
-from torch.optim.lr_scheduler import StepLR
-'''
-'''
-from selenium.webdriver.edge.options import Options
-import shutil
-import numpy as np
-import random
-'''
-
 
 if __name__ == "__main__":
     urls = []
-    with open('./urls.txt', 'r', encoding='utf8') as f:
+    with open('./resource/urls.txt', 'r', encoding='utf8') as f:
         urls = f.readlines()
     urls = [url[:-1] for url in urls]
 
-    pic = xlwt.Workbook(encoding='utf-8', style_compression=0)
-    sheet = pic.add_sheet('广告收集', cell_overwrite_ok=True)
-    sheet.write(0, 0, 'src')
-    sheet.write(0, 1, 'pos_x')
-    sheet.write(0, 2, 'pos_y')
-    sheet.write(0, 3, 'size_x')
-    sheet.write(0, 4, 'size_y')
-    sheet.write(0, 5, '广告种类')
-    sheet.write(0, 6, '亮度')
-    sheet.write(0, 7, '饱和度')
-    sheet.write(0, 8, '来源')
-    sheet.write(0, 9, '图片总量')
-    sheet.write(0, 10, '页面总面积')
-    sheet.write(0, 11, '文字')
-    sheet.write(0, 12, "minmax")
-    sheet.write(0, 18, "颜色种类数")
-    sheet.write(0, 19, "最大颜色数量占据的比例")
-    sheet.write(0, 20, "最大颜色RGB值")
-
-    dir_path = "./pic"
+    dir_path = "./tmp"
     # 创建驱动
     path_to_edge_driver = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedgedriver.exe'
     driver = webdriver.Edge()
     driver.maximize_window()
     headers = {"Connection": "close"}
 
-    n = 1
-    m = 1
+    m = 0
     times = 0
     for url in urls:
         times = times+1
-        print("This is "+url)
-        try:
-            # pic.save(u'./pic'+str(-m)+'.xls')
-            pic.save('./pic' + str(-m) + '.xls')
-            # D:\core\web\son-project\data\data\Chinese_web
-        except Exception as e:
-            print("Excel 文件写入错误: ", str(e))
+        print("This is " + url)
 
         pic = xlwt.Workbook(encoding='utf-8', style_compression=0)
         sheet = pic.add_sheet('广告收集', cell_overwrite_ok=True)
@@ -154,7 +106,7 @@ if __name__ == "__main__":
                 except binascii.Error as e:
                     print("图片解码错误: ", str(e))
                     continue
-                with open('./pic/' + str(n) + '.jpg', 'wb') as f:
+                with open(dir_path + '\\' + str(n) + '.jpg', 'wb') as f:
                     f.write(img_binary)
             elif '.jpg' in src or '.gif' in src or '.webp' in src:
                 try:
@@ -165,9 +117,9 @@ if __name__ == "__main__":
                         # 将 PIL.Image 对象转换为 JPG格式
                         img = img.convert('RGB')
                         # 保存 JPG 文件到本地
-                        img.save('./pic/' + str(n) + '.jpg', 'JPEG')
+                        img.save(dir_path + '\\' + str(n) + '.jpg', 'JPEG')
                     elif '.jpg' in src:
-                        with open('./pic/' + str(n) + '.jpg', 'wb') as f:
+                        with open(dir_path + '\\' + str(n) + '.jpg', 'wb') as f:
                             f.write(response.content)
                     else:
                         continue
@@ -176,7 +128,7 @@ if __name__ == "__main__":
             else:
                 continue
 
-            test_path = os.path.abspath(r"pic\\"+str(n)+'.jpg')
+            test_path = os.path.abspath(dir_path + "\\" + str(n) + '.jpg')
             ans = task.complete_evaluate(test_path)
             if ans is None:
                 continue
@@ -231,6 +183,14 @@ if __name__ == "__main__":
 
             n = n + 1
 
+        try:
+            # pic.save(u'./pic'+str(-m)+'.xls')
+            pic.save('./out/pic' + str(-m) + '.xls')
+            # D:\core\web\son-project\data\data\Chinese_web
+        except Exception as e:
+            print("Excel 文件写入错误: ", str(e))
+
+        # Clean all temp files
         for filename in os.listdir(dir_path):
             file_path = os.path.join(dir_path, filename)
             try:
